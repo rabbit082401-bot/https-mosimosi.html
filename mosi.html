@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>TRẠM PHÁT LỆNH</title>
+
+<style>
+
+body{
+background:black;
+color:#00ff9c;
+font-family:monospace;
+text-align:center;
+}
+
+h1{
+margin-top:30px;
+letter-spacing:3px;
+}
+
+#signal{
+font-size:36px;
+margin:40px;
+height:60px;
+}
+
+input{
+background:black;
+border:1px solid #00ff9c;
+color:#00ff9c;
+padding:10px;
+font-size:18px;
+text-align:center;
+width:200px;
+}
+
+button{
+background:#001f1a;
+border:1px solid #00ff9c;
+color:#00ff9c;
+padding:10px 20px;
+margin:10px;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>TRẠM PHÁT LỆNH</h1>
+
+<div id="signal">ĐANG NHẬN TÍN HIỆU...</div>
+
+<input id="answer" placeholder="GIẢI MÃ">
+
+<br>
+
+<button onclick="check()">XÁC NHẬN</button>
+<button onclick="play()">PHÁT LẠI</button>
+<button onclick="restart()">CHƠI LẠI</button>
+
+<div>
+
+Điểm: <span id="score">0</span> |
+Thời gian: <span id="time">120</span>s
+
+</div>
+
+<div id="msg"></div>
+
+<script>
+
+const morse={
+A:".-",B:"-...",C:"-.-.",D:"-..",
+E:".",F:"..-.",G:"--.",H:"....",
+I:"..",J:".---",K:"-.-",L:".-..",
+M:"--",N:"-.",O:"---",P:".--.",
+Q:"--.-",R:".-.",S:"...",T:"-",
+U:"..-",V:"...-",W:".--",X:"-..-",
+Y:"-.--",Z:"--.."
+}
+
+const commands=[
+"RUN",
+"HIDE",
+"CATCH",
+"ESCAPE",
+"SEARCH",
+"TRACK",
+"RUN NORTH",
+"HIDE NOW",
+"CATCH TARGET",
+"FIND RADIO",
+"SEND SIGNAL",
+"TRACK SHADOW"
+]
+
+let current=""
+let morseText=""
+let score=0
+let time=120
+let gameOver=false
+
+let audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+
+function textToMorse(text){
+
+let result=[]
+
+for(let c of text){
+
+if(c===" "){
+result.push(" ")
+}else{
+result.push(morse[c])
+}
+
+}
+
+return result.join(" ")
+
+}
+
+function newSignal(){
+
+if(gameOver) return
+
+current=commands[Math.floor(Math.random()*commands.length)]
+
+morseText=textToMorse(current)
+
+play()
+
+}
+
+function play(){
+
+if(gameOver) return
+
+let i=0
+let display=""
+
+function step(){
+
+if(i>=morseText.length || gameOver) return
+
+display+=morseText[i]
+
+document.getElementById("signal").innerText=display
+
+beep(morseText[i])
+
+i++
+
+setTimeout(step,200)
+
+}
+
+document.getElementById("signal").innerText=""
+
+step()
+
+}
+
+function beep(c){
+
+if(c!="." && c!="-") return
+
+let osc = audioCtx.createOscillator()
+
+osc.connect(audioCtx.destination)
+
+osc.start()
+
+setTimeout(()=>osc.stop(), c=="."?100:300)
+
+}
+
+function check(){
+
+if(gameOver) return
+
+let ans=document.getElementById("answer").value.toUpperCase()
+
+if(ans==current){
+
+score++
+
+document.getElementById("msg").innerText="GIẢI MÃ THÀNH CÔNG"
+
+document.getElementById("score").innerText=score
+
+document.getElementById("answer").value=""
+
+setTimeout(newSignal,800)
+
+}else{
+
+endGame("GAME OVER | LỆNH: "+current)
+
+}
+
+}
+
+function endGame(text){
+
+gameOver=true
+
+document.getElementById("signal").innerText="KẾT THÚC"
+
+document.getElementById("msg").innerText=text
+
+}
+
+function restart(){
+
+score=0
+time=120
+gameOver=false
+
+document.getElementById("score").innerText=score
+document.getElementById("time").innerText=time
+document.getElementById("msg").innerText=""
+document.getElementById("answer").value=""
+
+newSignal()
+
+}
+
+setInterval(()=>{
+
+if(gameOver) return
+
+time--
+
+document.getElementById("time").innerText=time
+
+if(time<=0){
+
+endGame("HẾT THỜI GIAN")
+
+}
+
+},1000)
+
+newSignal()
+
+</script>
+
+</body>
+</html>
